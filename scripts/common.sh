@@ -33,19 +33,19 @@ resolve_current_stable_tag() {
     fi
 
     local tag
-    tag="$({ fetch "${LSST_TAGS_URL}" || true; } \
-        | sed -nE 's/.*href="(v[0-9]+_[0-9]+(_[0-9]+)?\.list)".*/\1/p' \
-        | sed 's/\.list$//' \
-        | sort -V \
-        | tail -n 1)"
+    tag="$({ fetch "${LSST_DOCS_URL}" || true; } \
+        | sed -nE 's/.*current official release version, `?(v[0-9]+_[0-9]+(_[0-9]+)?).*/\1/p' \
+        | head -n 1)"
     if [[ -n "${tag}" ]]; then
         printf '%s\n' "${tag}"
         return
     fi
 
-    tag="$({ fetch "${LSST_DOCS_URL}" || true; } \
-        | sed -nE 's/.*current official release version, `?(v[0-9]+_[0-9]+(_[0-9]+)?).*/\1/p' \
-        | head -n 1)"
+    tag="$({ fetch "${LSST_TAGS_URL}" || true; } \
+        | sed -nE 's/.*href="(v[0-9]+_[0-9]+(_[0-9]+)?\.list)".*/\1/p' \
+        | sed 's/\.list$//' \
+        | sort -V \
+        | tail -n 1)"
     if [[ -n "${tag}" ]]; then
         printf '%s\n' "${tag}"
         return
@@ -128,4 +128,27 @@ configure_local_conda_envs_dir() {
     mkdir -p "${ENVS_DIR}"
     "${MINICONDA_DIR}/bin/conda" config --system --prepend envs_dirs "${ENVS_DIR}"
     "${MINICONDA_DIR}/bin/conda" config --system --set auto_activate_base false
+}
+
+activate_local_conda_base() {
+    # shellcheck disable=SC1091
+    source "${MINICONDA_DIR}/etc/profile.d/conda.sh"
+    conda activate base
+}
+
+run_lsstinstall_for_env() {
+    local tag="$1"
+    local env_name="$2"
+
+    export LSST_CONDA_ENV_NAME="${env_name}"
+    activate_local_conda_base
+    "${LSSTINSTALL}" -p "${MINICONDA_DIR}" -T "${tag}" -e "${env_name}"
+}
+
+source_lsst_env() {
+    local env_name="$1"
+
+    export LSST_CONDA_ENV_NAME="${env_name}"
+    # shellcheck disable=SC1091
+    source "${ROOT_DIR}/loadLSST.sh"
 }

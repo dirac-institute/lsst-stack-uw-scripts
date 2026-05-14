@@ -19,11 +19,10 @@ configure_local_conda_envs_dir
 ensure_lsstinstall
 
 log "Installing/updating LSST dependency environment"
-"${LSSTINSTALL}" -P -p "${MINICONDA_DIR}" -T "${TAG}" -e "${ENV_NAME}"
+run_lsstinstall_for_env "${TAG}" "${ENV_NAME}"
 
 log "Loading LSST environment"
-# shellcheck disable=SC1091
-source "${ROOT_DIR}/loadLSST.sh"
+source_lsst_env "${ENV_NAME}"
 
 log "Installing ${LSST_PACKAGE} at ${TAG}"
 eups distrib install -t "${TAG}" "${LSST_PACKAGE}"
@@ -36,5 +35,6 @@ setup "${LSST_PACKAGE}"
 write_current_env_file "${TAG}" "${ENV_NAME}"
 
 log "Done. To use this stack in a new shell, run:"
+log "  source ${VAR_DIR}/current-env.sh"
 log "  source ${ROOT_DIR}/loadLSST.sh"
 log "  setup ${LSST_PACKAGE}"

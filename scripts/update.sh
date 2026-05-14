@@ -17,13 +17,13 @@ TAG="${LSST_STACK_TAG}"
 ENV_NAME="${LSST_CONDA_ENV_NAME}"
 
 log "Updating ${LSST_PACKAGE} at ${TAG} in ${ENV_NAME}"
-# shellcheck disable=SC1091
-source "${ROOT_DIR}/loadLSST.sh"
+source_lsst_env "${ENV_NAME}"
 eups distrib install -t "${TAG}" "${LSST_PACKAGE}"
 curl -sSL https://raw.githubusercontent.com/lsst/shebangtron/main/shebangtron | python
 setup "${LSST_PACKAGE}"
 write_current_env_file "${TAG}" "${ENV_NAME}"
 
 log "Done. To use this stack in a new shell, run:"
+log "  source ${VAR_DIR}/current-env.sh"
 log "  source ${ROOT_DIR}/loadLSST.sh"
 log "  setup ${LSST_PACKAGE}"

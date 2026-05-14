@@ -33,8 +33,9 @@ The setup flow:
 2. Downloads `lsstinstall`.
 3. Installs local Miniconda at `miniconda3/`.
 4. Configures that conda installation to create environments under `envs/`.
-5. Uses `lsstinstall` to create/update a release-named LSST dependency
-   environment under `envs/`.
+5. Activates the local conda base environment and runs `lsstinstall` with
+   `LSST_CONDA_ENV_NAME` set so it creates/updates the release-named LSST
+   dependency environment under `envs/`.
 6. Installs `lsst_distrib` with EUPS for the resolved stable release tag.
 7. Runs LSST's shebang rewrite helper.
 
@@ -58,9 +59,11 @@ and runs `eups distrib install` for `lsst_distrib` at that tag again.
 
 ## Using the stack
 
-In each new shell session:
+In each new shell session, set the generated environment name before sourcing
+`loadLSST.sh`:
 
 ```bash
+source ./var/current-env.sh
 source ./loadLSST.sh
 setup lsst_distrib
 ```
