@@ -1,0 +1,12 @@
+# Installed software and generated state live under this repository but are not
+# source-controlled.
+/miniconda3/
+/envs/
+/loadLSST.*
+/ups_db/
+/EupsBuildDir/
+/var/
+
+# Local editor/cache noise.
+*.swp
+.DS_Store
