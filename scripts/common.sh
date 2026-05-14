@@ -122,6 +122,18 @@ activate_conda() {
     source "${MINICONDA_DIR}/etc/profile.d/conda.sh"
 }
 
+nounset_enabled() {
+    [[ $- == *u* ]]
+}
+
+restore_nounset() {
+    local restore="$1"
+
+    if [[ "${restore}" == true ]]; then
+        set -u
+    fi
+}
+
 ensure_lsst_conda_env() {
     local env_name="$1"
     local env_prefix
@@ -137,9 +149,15 @@ ensure_lsst_conda_env() {
 
 activate_lsst_conda_env() {
     local env_name="$1"
+    local restore_nounset=false
 
+    if nounset_enabled; then
+        restore_nounset=true
+        set +u
+    fi
     activate_conda
     conda activate "${env_name}"
+    restore_nounset "${restore_nounset}"
 }
 
 run_lsstinstall_for_env() {
@@ -153,8 +171,14 @@ run_lsstinstall_for_env() {
 
 source_lsst_env() {
     local env_name="$1"
+    local restore_nounset=false
 
     export LSST_CONDA_ENV_NAME="${env_name}"
+    if nounset_enabled; then
+        restore_nounset=true
+        set +u
+    fi
     # shellcheck disable=SC1091
     source "${ROOT_DIR}/loadLSST.sh"
+    restore_nounset "${restore_nounset}"
 }
