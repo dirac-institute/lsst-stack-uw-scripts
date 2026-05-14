@@ -34,13 +34,14 @@ The setup flow:
 3. Downloads `lsstinstall`.
 4. Installs local Miniconda at `miniconda3/`.
 5. Configures that conda installation to create environments under `envs/`.
-6. Creates a release-named conda environment under `envs/` with `conda create`
+6. Accepts the Anaconda Terms of Service for the default Miniconda channels.
+7. Creates a release-named conda environment under `envs/` with `conda create`
    and installs `rubin-env` there.
-7. Activates that conda environment and runs `lsstinstall` with
+8. Activates that conda environment and runs `lsstinstall` with
    `LSST_CONDA_ENV_NAME` set so LSST setup is tied to that environment rather
    than the base environment.
-8. Installs `lsst_distrib` with EUPS for the configured release tag.
-9. Runs LSST's shebang rewrite helper.
+9. Installs `lsst_distrib` with EUPS for the configured release tag.
+10. Runs LSST's shebang rewrite helper.
 
 To force a specific tag while testing the scripts, set `LSST_STACK_TAG`:
 

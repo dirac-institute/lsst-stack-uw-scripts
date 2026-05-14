@@ -16,6 +16,7 @@ log "Using LSST environment ${ENV_NAME} under ${ENVS_DIR}"
 mkdir -p "${ENVS_DIR}" "${VAR_DIR}"
 install_miniconda
 configure_local_conda_envs_dir
+accept_anaconda_tos
 ensure_lsst_conda_env "${ENV_NAME}"
 ensure_lsstinstall
 

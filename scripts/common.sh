@@ -112,6 +112,11 @@ configure_local_conda_envs_dir() {
     "${MINICONDA_DIR}/bin/conda" config --system --set auto_activate_base false
 }
 
+accept_anaconda_tos() {
+    "${MINICONDA_DIR}/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    "${MINICONDA_DIR}/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+}
+
 activate_conda() {
     # shellcheck disable=SC1091
     source "${MINICONDA_DIR}/etc/profile.d/conda.sh"
