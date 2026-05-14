@@ -13,7 +13,7 @@ installed software is placed under the repository root and ignored by Git.
   local stack.
 - `scripts/common.sh` contains shared Bash helpers.
 - `miniconda3/` is the local Miniconda installation.
-- `envs/lsst_<version>/` contains LSST conda environments. For example, release `v30_0_3` installs into `envs/lsst_30_0_3/`.
+- `envs/lsst_<version>/` contains LSST conda environments. For example, release `v29_2_1` installs into `envs/lsst_29_2_1/`.
 - `var/` contains downloaded installer state and the generated current-stack
   metadata.
 
@@ -29,20 +29,23 @@ Run from anywhere inside this repository:
 
 The setup flow:
 
-1. Resolves the current stable LSST release tag.
-2. Downloads `lsstinstall`.
-3. Installs local Miniconda at `miniconda3/`.
-4. Configures that conda installation to create environments under `envs/`.
-5. Activates the local conda base environment and runs `lsstinstall` with
-   `LSST_CONDA_ENV_NAME` set so it creates/updates the release-named LSST
-   dependency environment under `envs/`.
-6. Installs `lsst_distrib` with EUPS for the resolved stable release tag.
-7. Runs LSST's shebang rewrite helper.
+1. Uses the checked-in default LSST release tag, currently `v29_2_1`.
+2. Uses the checked-in default `rubin-env` version, currently `10.1.0`.
+3. Downloads `lsstinstall`.
+4. Installs local Miniconda at `miniconda3/`.
+5. Configures that conda installation to create environments under `envs/`.
+6. Creates a release-named conda environment under `envs/` with `conda create`
+   and installs `rubin-env` there.
+7. Activates that conda environment and runs `lsstinstall` with
+   `LSST_CONDA_ENV_NAME` set so LSST setup is tied to that environment rather
+   than the base environment.
+8. Installs `lsst_distrib` with EUPS for the configured release tag.
+9. Runs LSST's shebang rewrite helper.
 
 To force a specific tag while testing the scripts, set `LSST_STACK_TAG`:
 
 ```bash
-LSST_STACK_TAG=v30_0_3 ./scripts/setup.sh
+LSST_STACK_TAG=v29_2_1 ./scripts/setup.sh
 ```
 
 ## Update the current stack

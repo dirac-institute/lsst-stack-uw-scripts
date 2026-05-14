@@ -6,16 +6,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/common.sh
 source "${SCRIPT_DIR}/common.sh"
 
-TAG="$(resolve_current_stable_tag)"
+TAG="$(current_stable_tag)"
 ENV_NAME="$(env_name_for_tag "${TAG}")"
 
-log "Resolved current stable LSST tag: ${TAG}"
+log "Using LSST stack tag: ${TAG}"
 log "Using local conda at ${MINICONDA_DIR}"
 log "Using LSST environment ${ENV_NAME} under ${ENVS_DIR}"
 
 mkdir -p "${ENVS_DIR}" "${VAR_DIR}"
 install_miniconda
 configure_local_conda_envs_dir
+ensure_lsst_conda_env "${ENV_NAME}"
 ensure_lsstinstall
 
 log "Installing/updating LSST dependency environment"

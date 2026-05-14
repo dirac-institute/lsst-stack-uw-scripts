@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/common.sh"
 if [[ -f "${VAR_DIR}/current-env.sh" ]]; then
     read_current_env_file
 else
-    LSST_STACK_TAG="$(resolve_current_stable_tag)"
+    LSST_STACK_TAG="$(current_stable_tag)"
     LSST_CONDA_ENV_NAME="$(env_name_for_tag "${LSST_STACK_TAG}")"
 fi
 
