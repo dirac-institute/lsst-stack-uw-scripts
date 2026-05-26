@@ -19,7 +19,7 @@
 #   - Network access to eups.lsst.codes and conda-forge
 #   - The lsst_relocator.py script in the same directory
 #
-set -euo pipefail
+set -eo pipefail
 
 # ─── Defaults ───────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -93,16 +93,26 @@ echo "════════════════════════�
 echo
 
 # ─── Check prerequisites ───────────────────────────────────────────
-for cmd in conda patchelf curl; do
-    if ! command -v "$cmd" &>/dev/null; then
-        echo "ERROR: $cmd not found in PATH"
-        exit 1
-    fi
-done
+if ! command -v curl &>/dev/null; then
+    echo "ERROR: curl not found in PATH"
+    exit 1
+fi
 
-if ! conda list -n base conda-build &>/dev/null; then
-    echo "Installing conda-build..."
-    conda install -n base -y conda-build
+# Set up isolated local conda (installs miniforge3 if needed)
+echo "━━━ Setting up isolated conda environment ━━━"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/setup-conda.sh"
+
+# patchelf: prefer system install, fall back to local copy
+if command -v patchelf &>/dev/null; then
+    echo "Using system patchelf: $(command -v patchelf)"
+elif [[ -x "$SCRIPT_DIR/patchelf/bin/patchelf" ]]; then
+    export PATH="$SCRIPT_DIR/patchelf/bin:$PATH"
+    echo "Using local patchelf: $SCRIPT_DIR/patchelf/bin/patchelf"
+else
+    echo "patchelf not found — installing locally..."
+    bash "$SCRIPT_DIR/install-patchelf.sh"
+    export PATH="$SCRIPT_DIR/patchelf/bin:$PATH"
 fi
 
 # ─── Check if package already exists in channel ────────────────────
@@ -145,7 +155,7 @@ cd "$INSTALL_DIR"
 echo "Running lsstinstall for tag $TAG..."
 curl -OL https://ls.st/lsstinstall
 chmod u+x lsstinstall
-./lsstinstall -T "$TAG"
+./lsstinstall -T "$TAG" -p "${LSST_CONDA_DIR:-$SCRIPT_DIR/miniforge3}"
 
 echo "Sourcing LSST environment..."
 # shellcheck disable=SC1091
