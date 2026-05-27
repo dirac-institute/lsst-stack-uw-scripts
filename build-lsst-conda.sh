@@ -19,15 +19,15 @@
 #   - Network access to eups.lsst.codes and conda-forge
 #   - The lsst_relocator.py script in the same directory
 #
-set -eo pipefail
+set -euo pipefail
 
 # ─── Defaults ───────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TAG=""
 PRODUCT="lsst_distrib"
-CHANNEL_DIR=""
-BUILD_DIR="/tmp/lsst-conda-build-$$"
-KEEP_BUILD=false
+CHANNEL_DIR="./conda-channel"
+BUILD_DIR="./build-$$"
+KEEP_BUILD=true
 
 # ─── Parse arguments ───────────────────────────────────────────────
 usage() {
@@ -40,7 +40,7 @@ Required:
 
 Optional:
   --product PRODUCT     Top-level EUPS product (default: lsst_distrib)
-  --build-dir DIR       Working directory for the build (default: /tmp/lsst-conda-build-PID)
+  --build-dir DIR       Working directory for the build (default: ./build-PID)
   --keep-build          Don't remove the build directory on success
   -h, --help            Show this help
 EOF
@@ -105,15 +105,22 @@ source "$SCRIPT_DIR/setup-conda.sh"
 
 # patchelf: prefer system install, fall back to local copy
 if command -v patchelf &>/dev/null; then
-    echo "Using system patchelf: $(command -v patchelf)"
+    PATCHELF="$(command -v patchelf)"
 elif [[ -x "$SCRIPT_DIR/patchelf/bin/patchelf" ]]; then
-    export PATH="$SCRIPT_DIR/patchelf/bin:$PATH"
-    echo "Using local patchelf: $SCRIPT_DIR/patchelf/bin/patchelf"
+    PATCHELF="$SCRIPT_DIR/patchelf/bin/patchelf"
 else
     echo "patchelf not found — installing locally..."
     bash "$SCRIPT_DIR/install-patchelf.sh"
-    export PATH="$SCRIPT_DIR/patchelf/bin:$PATH"
+    PATCHELF="$SCRIPT_DIR/patchelf/bin/patchelf"
 fi
+export PATCHELF
+echo "Using patchelf: $PATCHELF"
+
+# Resolve conda-build path now, before loadLSST.sh clobbers PATH
+CONDA_BUILD="$(command -v conda-build)"
+CONDA="$(command -v conda)"
+export CONDA_BUILD CONDA
+echo "Using conda-build: $CONDA_BUILD"
 
 # ─── Check if package already exists in channel ────────────────────
 if [[ -d "$CHANNEL_DIR/linux-64" ]]; then
@@ -128,6 +135,9 @@ fi
 
 # ─── Set up build directory ────────────────────────────────────────
 mkdir -p "$BUILD_DIR"
+BUILD_DIR="$(cd "$BUILD_DIR" && pwd)"  # resolve to absolute path
+mkdir -p "$CHANNEL_DIR"
+CHANNEL_DIR="$(cd "$CHANNEL_DIR" && pwd)"  # resolve to absolute path
 cleanup() {
     if [[ "$KEEP_BUILD" == false ]]; then
         echo "Cleaning up build directory..."
@@ -158,6 +168,8 @@ chmod u+x lsstinstall
 ./lsstinstall -T "$TAG" -p "${LSST_CONDA_DIR:-$SCRIPT_DIR/miniforge3}"
 
 echo "Sourcing LSST environment..."
+# LSST scripts don't tolerate nounset
+set +u
 # shellcheck disable=SC1091
 source loadLSST.sh
 
@@ -173,6 +185,19 @@ setup "$PRODUCT"
 echo "Verifying setup..."
 SETUP_COUNT=$(eups list -s | wc -l)
 echo "  $SETUP_COUNT products are set up"
+
+# Dump a manifest of setup'd products and their directories for the relocator
+MANIFEST_FILE="$BUILD_DIR/product_manifest.txt"
+echo "Dumping product manifest..."
+eups list -s | while read -r name version rest; do
+    env_var="$(echo "${name}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')_DIR"
+    dir="${!env_var:-}"
+    if [[ -n "$dir" && -d "$dir" ]]; then
+        echo "${name}|${version}|${env_var}|${dir}"
+    fi
+done > "$MANIFEST_FILE"
+MANIFEST_COUNT=$(wc -l < "$MANIFEST_FILE")
+echo "  $MANIFEST_COUNT products with valid directories"
 
 # Record the rubin-env version for the recipe
 RUBIN_ENV_VERSION=$(conda list --json rubin-env 2>/dev/null \
@@ -190,7 +215,8 @@ python3 "$SCRIPT_DIR/lsst_relocator.py" \
     --tag "$TAG" \
     --product "$PRODUCT" \
     --output "$RELOCATED_DIR" \
-    --recipe-dir "$RECIPE_DIR"
+    --recipe-dir "$RECIPE_DIR" \
+    --manifest "$MANIFEST_FILE"
 
 # ═══════════════════════════════════════════════════════════════════
 # STEP 3: Build the conda package
@@ -203,7 +229,7 @@ echo
 mkdir -p "$CHANNEL_DIR/linux-64"
 mkdir -p "$CHANNEL_DIR/noarch"
 
-conda-build "$RECIPE_DIR" \
+"$CONDA_BUILD" "$RECIPE_DIR" \
     --output-folder "$CHANNEL_DIR" \
     --no-anaconda-upload \
     --no-test  # Skip test for now; run separately
@@ -217,7 +243,7 @@ echo
 echo "━━━ Step 4/4: Channel indexing ━━━"
 echo
 
-conda index "$CHANNEL_DIR"
+"$CONDA" index "$CHANNEL_DIR"
 
 echo
 echo "═══════════════════════════════════════════════════════"

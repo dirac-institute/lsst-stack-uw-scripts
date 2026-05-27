@@ -1,0 +1,4 @@
+build-*
+patchelf
+miniforge3
+conda-channel
