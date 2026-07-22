@@ -33,7 +33,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 class EupsProduct(NamedTuple):
@@ -422,12 +422,14 @@ def generate_conda_recipe(
     stack_version: str,
     rubin_env_version: str,
     product_name: str = "lsst-distrib",
+    conda_version: Optional[str] = None,
 ):
     """Generate a conda-build recipe (meta.yaml + build.sh) for the relocated stack."""
     recipe_dir.mkdir(parents=True, exist_ok=True)
 
-    # Convert EUPS version format (v30_0_7) to conda version (30.0.7)
-    conda_version = stack_version.lstrip("v").replace("_", ".")
+    if conda_version is None:
+        # Convert EUPS version format (v30_0_7) to conda version (30.0.7)
+        conda_version = stack_version.lstrip("v").replace("_", ".")
 
     meta_yaml = f"""\
 package:
@@ -521,6 +523,10 @@ def main():
         help="EUPS tag (e.g., v30_0_7) — used for versioning the conda package",
     )
     parser.add_argument(
+        "--conda-version", type=str, default=None,
+        help="Conda package version to write into the generated recipe",
+    )
+    parser.add_argument(
         "--product", "-p", type=str, default="lsst_distrib",
         help="Top-level EUPS product name (default: lsst_distrib)",
     )
@@ -594,7 +600,10 @@ def main():
     # 6. Generate conda recipe
     print("\nGenerating conda recipe...")
     conda_product_name = args.product.replace("_", "-")
-    generate_conda_recipe(output, recipe_dir, args.tag, rubin_env_version, conda_product_name)
+    generate_conda_recipe(
+        output, recipe_dir, args.tag, rubin_env_version, conda_product_name,
+        args.conda_version,
+    )
 
     # 7. Summary
     print(f"\n=== Done ===")
