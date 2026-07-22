@@ -124,7 +124,7 @@ echo "Using conda-build: $CONDA_BUILD"
 
 # ─── Check if package already exists in channel ────────────────────
 if [[ -d "$CHANNEL_DIR/linux-64" ]]; then
-    existing=$(find "$CHANNEL_DIR/linux-64" -name "${CONDA_PRODUCT_NAME}-${CONDA_VERSION}-*.tar.bz2" 2>/dev/null || true)
+    existing=$(find "$CHANNEL_DIR/linux-64" \( -name "${CONDA_PRODUCT_NAME}-${CONDA_VERSION}-*.conda" -o -name "${CONDA_PRODUCT_NAME}-${CONDA_VERSION}-*.tar.bz2" \) 2>/dev/null || true)
     if [[ -n "$existing" ]]; then
         echo "Package already exists in channel:"
         echo "  $existing"
@@ -232,6 +232,7 @@ mkdir -p "$CHANNEL_DIR/noarch"
 "$CONDA_BUILD" "$RECIPE_DIR" \
     --output-folder "$CHANNEL_DIR" \
     --no-anaconda-upload \
+    --pkg-format .conda \
     --no-test  # Skip test for now; run separately
 
 echo "Package built successfully."
