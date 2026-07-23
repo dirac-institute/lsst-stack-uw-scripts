@@ -28,7 +28,7 @@ We chose the monolithic repack. The tradeoff is that users cannot install indivi
 │  2. install-patchelf.sh     Local patchelf binary                │
 │  3. lsstinstall + eups      Standard LSST install in container   │
 │  4. lsst_relocator.py       Flatten into conda prefix layout     │
-│  5. conda-build             Package into .tar.bz2                │
+│  5. conda-build             Package into .conda                  │
 │  6. conda index             Update channel repodata.json         │
 │                                                                  │
 │  Output: local conda channel with lsst-distrib package           │
@@ -123,7 +123,7 @@ A `meta.yaml` and `build.sh` are generated. The recipe pins the exact `rubin-env
 
 ### Conda build and channel indexing
 
-`conda-build` packages the relocated files. The `--no-test` flag is used to skip the test phase (tests can be run separately after install). The resulting `.tar.bz2` is placed in the channel directory, and `conda index` regenerates `repodata.json`.
+`conda-build` packages the relocated files in the modern `.conda` package format. The `--no-test` flag is used to skip the test phase (tests can be run separately after install). The resulting `.conda` package is placed in the channel directory, and `conda index` regenerates `repodata.json`.
 
 ## Dependency model
 
